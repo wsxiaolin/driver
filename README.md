@@ -74,6 +74,3 @@ window.addEventListener('DOMContentLoaded', (event) => {
   }
 }```
 
-## 语言支持
-
-语言检测由 AI 处理，因此它可以适应不同的编程语言。
