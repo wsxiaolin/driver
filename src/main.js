@@ -1,18 +1,19 @@
 class TutorialDriver {
-    constructor(cdnLinksCSS, cdnLinks) {
-        this.cdnLinksCSS = cdnLinksCSS;
-        this.cdnLinks = cdnLinks;
+    constructor(CSSLinks, JSLinks) {
+        this.CSSLinks = CSSLinks;
+        this.JSLinks = JSLinks;
+        this.config = {};
     }
     
-    hasViewedTutorial(pageName) {
+    static hasViewedTutorial(pageName) {
       const viewedPages = JSON.parse(localStorage.getItem('viewedTutorials') || '{}');
       return !!viewedPages[pageName];
     }
 
     async initialize() {
-        await this.loadCSSWithFallback(this.cdnLinksCSS);
+        await TutorialDriver.loadCSSWithFallback(this.CSSLinks);
 
-        this.tryLoadScriptFromCDNs(this.cdnLinks, () => {
+        TutorialDriver.tryLoadScriptFromCDNs(this.JSLinks, () => {
             const startDriver = this.startDriverForPage(this.config.initConfig);
             const currentPageName = TutorialDriver.getPageName(this.config.pagelist);
             startDriver(currentPageName);
@@ -42,43 +43,60 @@ class TutorialDriver {
         }
     }
 
-    loadCSSWithFallback(hrefs) {
-        const tryLoadCSS = (href) => new Promise((resolve, reject) => {
-            const link = document.createElement('link');
-            link.href = href;
-            link.rel = 'stylesheet';
-
-            link.onload = () => resolve(href);
-            link.onerror = () => reject(`Failed to load ${href}`);
-
-            document.head.appendChild(link);
-        });
-
-        const loadSequentially = (index) => {
-            if (index >= hrefs.length) {
-                return Promise.reject('All URLs failed to load.');
-            }
-            return tryLoadCSS(hrefs[index])
-                .catch(error => {
-                    console.error(error);
-                    return loadSequentially(index + 1);
-                });
+    static loadCSSWithFallback(hrefs) {
+      const tryLoadCSS = (href) => new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.href = href;
+        link.rel = 'stylesheet';
+    
+        const timeoutId = setTimeout(() => {
+          reject(`Timeout: Failed to load ${href} within 3 seconds`);
+          link.remove(); // 取消加载超时资源
+        }, 3000);
+    
+        link.onload = () => {
+          clearTimeout(timeoutId);
+          resolve(href);
         };
-
-        return loadSequentially(0);
-    }
-
-    tryLoadScriptFromCDNs(cdnLinks, onSuccess) {
-        if (cdnLinks.length === 0) {
-            console.error('All CDNs failed to load the script.');
-            return;
+    
+        link.onerror = () => {
+          clearTimeout(timeoutId);
+          reject(`Failed to load ${href}`);
+          link.remove(); // 加载失败时也需要移除元素
+        };
+    
+        document.head.appendChild(link);
+      });
+    
+      const loadSequentially = async (index) => {
+        if (index >= hrefs.length) {
+          return Promise.reject('All URLs failed to load.');
         }
-
-        const currentCDN = cdnLinks.shift();
-        this.loadScript(currentCDN, onSuccess, () => this.tryLoadScriptFromCDNs(cdnLinks, onSuccess));
+    
+        try {
+          return await Promise.race([tryLoadCSS(hrefs[index]), new Promise(resolve => setTimeout(resolve, 3000))]);
+        } catch (error) {
+          console.error(error);
+          return loadSequentially(index + 1);
+        }
+      };
+    
+      return loadSequentially(0);
+    }
+    
+    static tryLoadScriptFromCDNs(JSLinks, onSuccess) {
+      if (JSLinks.length === 0) {
+        console.error('All CDNs failed to load the script.');
+        return;
+      }
+    
+      const currentCDN = JSLinks.shift();
+      TutorialDriver.loadScript(currentCDN, onSuccess, () => {
+        setTimeout(() => TutorialDriver.tryLoadScriptFromCDNs(JSLinks, onSuccess), 3000); // 等待3秒后继续加载下一个资源
+      });
     }
 
-    loadScript(src, onSuccess, onError) {
+    static loadScript(src, onSuccess, onError) {
         const script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = src;
@@ -90,13 +108,12 @@ class TutorialDriver {
         document.head.appendChild(script);
     }
 
-    startDriverForPage(initConfig) {
+    startDriverForPage() {
         return (pageName) => {
-              if (!this.hasViewedTutorial(pageName)) {
+              if (!TutorialDriver.hasViewedTutorial(pageName)) {
                 const steps = this.config.pageDriversMap[pageName];
-                console.log(this.config.pageDriversMap)
                 if (steps) {
-                  const createAndStartDriver = TutorialDriver.createDriver(initConfig);
+                  const createAndStartDriver = TutorialDriver.createDriver(this.config.initConfig);
                   const driver = createAndStartDriver(steps);
                   driver.start(); // 启动引导
                   TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
@@ -110,13 +127,12 @@ class TutorialDriver {
     }
 
     static getPageName(pagelist) {
-        console.log(pagelist)
-        if (!pagelist.hasOwnProperty(window.location.pathname)) console.log("no such pages in page list")
+        if (!pagelist.hasOwnProperty(window.location.pathname)) console.warn("no such pages in page list")
         return pagelist[window.location.pathname]
     }
 
     static compulsoryDriver(config) {
-        const currentPageName = TutorialDriver.getPageName(this.config.pagelist);
+        const currentPageName = TutorialDriver.getPageName(config.pagelist);
         if (currentPageName) {
           const steps = config.pageDriversMap[currentPageName];
           if (steps) {
@@ -147,20 +163,20 @@ class TutorialDriver {
 
 
     /* 开始执行 */
-    initializeApp(config) {
+    initializeApp() {
         // 基于加载的配置执行初始化操作
-        this.loadCSSWithFallback(this.cdnLinksCSS)
-            .then(() => console.log('CSS loaded successfully.'))
-            .catch(() => console.log('Failed to load any of the CSS files'));
+        TutorialDriver.loadCSSWithFallback(this.CSSLinks)
+            .then(() => console.info('CSS loaded successfully.'))
+            .catch(() => console.info('Failed to load any of the CSS files'));
 
-        this.tryLoadScriptFromCDNs(this.cdnLinks, () => {
-            console.log('Script loaded successfully');
+        TutorialDriver.tryLoadScriptFromCDNs(this.JSLinks, () => {
+            console.info('Script loaded successfully');
             if (document.querySelector("#navStart")) document.querySelector("#navStart").style.display = "block";
             const startDriver = this.startDriverForPage(this.config.initConfig);
             const currentPageName = TutorialDriver.getPageName(this.config.pagelist);
             startDriver(currentPageName);
-            console.log("driver started successfully");
-            const selector = config.forceStartSelectors[window.location.pathname] || "#navStart";
+            console.info("driver started successfully");
+            const selector = this.config.forceStartSelectors[window.location.pathname] || "#navStart";
             if (document.querySelector(selector)) {
                 document.querySelector(selector).addEventListener('click', () => {
                     console.info(`${selector} has been clicked, driver started`);
@@ -171,23 +187,27 @@ class TutorialDriver {
             }
         });
     }
+    
+    start(path) {
+      this.loadConfigAndInitialize(path)
+    }
 
 }
 
 /* 开始执行 */
 window.addEventListener('DOMContentLoaded', (event) => {
-  const path = "";
-    const cdnLinksCSS = [
+  const path = "../src/config/zh-CN.json";
+    const CSSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
         'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.css',
         'https://cdn.staticfile.net/driver.js/0.9.8/driver.min.css'
     ];
-    const cdnLinks = [
+    const JSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.js',
         'https://cdn.staticfile.net/driver.js/0.9.8/driver.min.js'
     ];
 
-    const tutorialDriver = new TutorialDriver(cdnLinksCSS, cdnLinks);
-    tutorialDriver.loadConfigAndInitialize(path);
+    const tutorialDriver = new TutorialDriver(CSSLinks, JSLinks);
+    tutorialDriver.start(path);
 });
