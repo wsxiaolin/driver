@@ -1,0 +1,51 @@
+{
+  "forceStartSelectors": {
+    "/src/": "#navStart"
+  },
+  "pagelist": {
+    "/tests/": "t1",
+    "/tests/page2.html": "t2"
+  },
+  "initConfig": {
+    "stageBackground": "#cccccc",
+    "doneBtnText": "完成",
+    "closeBtnText": "关闭",
+    "nextBtnText": "下一步",
+    "prevBtnText": "上一步",
+    "allowClose": false
+  },
+  "pageDriversMap": {
+    "t1": [
+      {
+        "element": "body > section > article:nth-child(1) > h2",
+        "popover": {
+          "title": "t1",
+          "description": "1"
+        }
+      },
+      {
+        "element": "body > section > article:nth-child(2) > p",
+        "popover": {
+          "title": "t2",
+          "description": "t2"
+        }
+      }
+    ],
+  "t2":[
+      {
+        "element": "h1",
+        "popover": {
+          "title": "t1",
+          "description": "1"
+        }
+      },
+      {
+        "element": "body > section > article:nth-child(2) > p",
+        "popover": {
+          "title": "t2",
+          "description": "t2"
+        }
+      }
+    ]
+  }
+}

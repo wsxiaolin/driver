@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="../src/main.js"></script>
+<title>Complex HTML Page</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+  }
+  
+  header {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+  }
+  
+  nav {
+    background-color: #444;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+  }
+  
+  section {
+    padding: 20px;
+  }
+  
+  article {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Welcome to My Complex Page</h1>
+</header>
+
+<nav>
+  <a href="#" id="navStart">强制开启导航</a> |
+  <a href="#">About</a> |
+  <a href="#">Services</a> |
+  <a href="#">Contact</a>
+</nav>
+
+<section>
+  <article>
+    <h2 onclick="window.location.href='./page2.html'">Article Title 1</h2>
+    <p>This is the content of article 1.</p>
+  </article>
+
+  <article>
+    <h2>Article Title 2</h2>
+    <p>This is the content of article 2.</p>
+  </article>
+</section>
+
+<footer>
+  <p>&copy; 2024 . All Rights Reserved.</p>
+</footer>
+
+</body>
+</html>
