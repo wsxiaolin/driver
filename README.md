@@ -5,32 +5,6 @@
 用的driver.js库是一个**旧版本**，[文档](http://driver.employleague.cn/guide/#%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B)
 
 
-## 开始执行：
-```
-window.addEventListener('DOMContentLoaded', (event) => {
-  const path = "path/to/JSONfile";
-    const cdnLinksCSS = [
-        'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
-        'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.css',
-        'https://cdn.staticfile.net/driver.js/0.9.8/driver.min.css'
-    ];
-    const cdnLinks = [
-        'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.js',
-        'https://cdn.staticfile.net/driver.js/0.9.8/driver.min.js'
-    ];
-
-    const tutorialDriver = new TutorialDriver(cdnLinksCSS, cdnLinks);
-    tutorialDriver.loadConfigAndInitialize(path);
-});
-```
-## 执行步骤
-
-1. 基于配置创建`driver`实例对象 。
-2. `pagelist` 对象将页面路径绑定到导航名称。键表示路径，值表示相应的导航名称。导航名称应与`pageDriversMap` 对象中定义的步骤匹配。
-3. 检查当前页面是否已导航。如果没有，则打开导航并添加指示已查看的标志。
-4. 绑定事件：单击特定按钮将强制触发导航。
-
 ## 配置
 
 配置对象包括以下属性：
@@ -61,7 +35,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
    - `onPrevious`：移动到上一步时调用的回调函数。
 
 - `pageDriversMap`：此对象表示每个导航的步骤。键是导航名称，值是步骤数组。每个步骤被定义为具有以下属性的 JSON 对象：
-```{
+```
+{
   element: '#some-item',        // Query selector string or Node to be highlighted 高亮节点选择器
   popover: {                    // There will be no popover if empty or not given 弹窗选项
     className: 'popover-class', // className to wrap this specific step popover in addition to the general className in Driver options 弹窗额外class名
@@ -72,5 +47,73 @@ window.addEventListener('DOMContentLoaded', (event) => {
     nextBtnText: 'Next',        // Next button text for this step 下一步按钮文字
     prevBtnText: 'Previous',    // Previous button text for this step 上一步按钮文字
   }
-}```
+}
+```
+
+代码中包含了两个类：`Loader` 和 `TutorialDriver`，以及一个在文档加载完成后执行的初始化脚本。下面是对这段代码的详细文档注释补充。
+
+### 类 `Loader`
+
+此类提供了静态方法来异步加载CSS和JS资源。它设计为不需要实例化，因此其构造函数会直接抛出错误。
+
+#### 方法
+
+- `loadCSS(hrefs)`
+  - **参数**：`hrefs`（`string[]`）- CSS文件的URL数组。
+  - **返回值**：`Promise<void>` - 加载成功时解决的Promise。
+  - **功能**：异步加载CSS文件，支持带有备用链接的数组。当主链接加载失败时，尝试加载下一个链接。如果所有CSS文件都无法加载，则抛出错误。
+
+- `loadJS(srcArray)`
+  - **参数**：`srcArray`（`string[]`）- JS文件的URL数组。
+  - **返回值**：`Promise<void>` - 加载成功时解决的Promise。
+  - **功能**：异步加载JS文件，支持带有备用CDN链接的数组。当主链接加载失败时，尝试加载下一个链接。如果所有JS文件都无法加载，则抛出错误。
+
+### 类 `TutorialDriver`
+
+此类用于管理和启动页面上的教程引导流程。
+
+#### 构造函数
+
+- **参数**：`CSSLinks`, `JSLinks` - 分别为CSS和JS资源链接的数组。
+- **功能**：初始化实例时不直接使用这些参数，但通过`loadResources`方法来加载这些资源。
+
+#### 方法
+
+- `loadResources(CSSLinks, JSLinks)`
+  - **参数**：`CSSLinks`, `JSLinks` - 分别为CSS和JS资源链接的数组。
+  - **功能**：调用`Loader`类的静态方法加载CSS和JS资源。
+
+- `getPageName()`
+  - **返回值**：当前页面名称，基于`config.pagelist`的映射。
+  - **功能**：获取当前页面的名称，如果页面不存在于`pagelist`中，则发出警告。
+
+- `hasViewedTutorial(pageName)`
+  - **参数**：`pageName`（`string`）- 页面名称。
+  - **返回值**：布尔值，表示用户是否已观看过该页面的教程。
+  - **功能**：检查localStorage中是否记录了用户已观看过指定页面的教程。
+
+- `markTutorialAsViewed(pageName)`
+  - **参数**：`pageName`（`string`）- 页面名称。
+  - **功能**：在localStorage中标记用户已观看过指定页面的教程。
+
+- `initialize(path)`
+  - **参数**：`path`（`string`）- 配置文件的路径。
+  - **功能**：异步加载配置文件并更新实例的`config`属性。
+
+- `start()`
+  - **功能**：根据配置启动页面教程引导。如果用户尚未观看过当前页面的教程，则立即启动；否则，等待用户点击特定元素后启动。
+
+- `startDriver()`
+  - **功能**：具体执行教程引导的逻辑，包括定义步骤和启动Driver.js引导。
+
+### 初始化脚本
+
+在文档加载完成后，此脚本执行以下操作：
+
+1. 定义CSS和JS资源链接。
+2. 创建`TutorialDriver`实例。
+3. 加载必要的CSS和JS资源。
+4. 初始化`TutorialDriver`实例（加载配置文件）。
+5. 启动教程引导。
+
 

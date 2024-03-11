@@ -12,7 +12,8 @@
     "closeBtnText": "关闭",
     "nextBtnText": "下一步",
     "prevBtnText": "上一步",
-    "allowClose": false
+    "allowClose": false,
+    "keyboardControl": true
   },
   "pageDriversMap": {
     "t1": [
@@ -20,7 +21,7 @@
         "element": "body > section > article:nth-child(1) > h2",
         "popover": {
           "title": "t1",
-          "description": "1"
+          "description": "这里可以写<strong>HTML</strong>"
         }
       },
       {
@@ -37,13 +38,6 @@
         "popover": {
           "title": "t1",
           "description": "1"
-        }
-      },
-      {
-        "element": "body > section > article:nth-child(2) > p",
-        "popover": {
-          "title": "t2",
-          "description": "t2"
         }
       }
     ]
