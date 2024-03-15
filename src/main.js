@@ -79,8 +79,9 @@ class TutorialDriver {
      * @param {Array<string>} CSSLinks - 需要加载的 CSS 文件链接数组。
      * @param {Array<string>} JSLinks - 需要加载的 JS 文件链接数组。
      */
-    constructor(CSSLinks, JSLinks) {
+    constructor() {
         this.config = {};
+        this.cancleDriverCount = JSON.parse(localStorage.getItem('cancleDriverCount') || '{}');
     }
 
     /**
@@ -105,13 +106,19 @@ class TutorialDriver {
     }
 
     /**
-     * 检查用户是否已经观看过指定页面的教程。
+     * 判断是否应当开启教程指定页面的教程。
      * @param {string} pageName - 页面名称。
-     * @returns {boolean} 如果用户已经观看过教程，则返回 true；否则返回 false。
+     * @param {number} day - 如果用户在 day 天之内打开过教程并且关闭，则不再开启（默认为0.5天）
+     * @returns {boolean} 如果应当开启，则返回 true；否则返回 false。
      */
-    static hasViewedTutorial(pageName) {
+    static shouldStartTutorial(pageName,cancleDriverCount = 0) {
         const viewedPages = JSON.parse(localStorage.getItem('viewedTutorials') || '{}');
-        return !!viewedPages[pageName];
+        if (viewedPages[pageName] == undefined) return  true //没有观看记录，直接开启新导航
+        if (viewedPages[pageName] == true) return false //已经看过的则关闭行为不再会影响之后的默认弹出（用户可能是已经看过的了，只是不小心误触了）
+        if( (+new Date() - viewedPages[pageName]) > cancleDriverCount * cancleDriverCount * cancleDriverCount * cancleDriverCount* 60 * 60 * 1000) return true //关闭导航会写入时间戳，上一次关闭 > 指定时间（取消次数^4 小时）
+        if(cancleDriverCount >= 4) return false //用户是一点也不想看教程了
+        return false
+        
     }
 
     /**
@@ -154,10 +161,10 @@ class TutorialDriver {
         } else {
             console.warn(`can not found start-element: ${selector}`);
         }
-        if (!TutorialDriver.hasViewedTutorial(this.getPageName())) {
+        if (TutorialDriver.shouldStartTutorial(this.getPageName())) {
             this.startDriver();
         } else {
-            console.info(`page has been already viewed`);
+            console.info(`page should not be start`);
         }
     }
 
@@ -166,13 +173,40 @@ class TutorialDriver {
      */
     startDriver() {
         const pageName = this.getPageName();
+        
+        this.config.initConfig.onNext = () => {
+            if(driver.hasNextStep() == false){
+              TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
+            }
+        }
+        
+        // 绑定事件：关闭导航之后标记当前导航未完成，下一次访问将会开启
+        this.config.initConfig.onDeselected = () => {
+          if (TutorialDriver.shouldStartTutorial(this.getPageName(pageName),this.cancleDriverCount[this.getPageName(pageName)]) == true) {
+            // 导航没有被看过，用户首次观看的时候就关闭它了
+            const viewedPages = JSON.parse(localStorage.getItem('viewedTutorials') || '{}');
+            viewedPages[pageName] = +new Date();
+            // 指定天数之后再次开启（在 shouldStartTutoraial传参）
+            localStorage.setItem('viewedTutorials', JSON.stringify(viewedPages));
+            if(this.cancleDriverCount.hasOwnProperty(this.getPageName(pageName))){
+              // 多次取消：累计
+              this.cancleDriverCount[this.getPageName(pageName)] += 1
+            } else {
+              // 第一次取消
+              this.cancleDriverCount[this.getPageName(pageName)] = 1
+            }
+            localStorage.setItem("cancleDriverCount",JSON.stringify(this.cancleDriverCount))
+            console.log(this.cancleDriverCount)
+            
+          }
+        }
         const steps = this.config.pageDriversMap[pageName];
         const driver = new Driver(this.config.initConfig);
 
         if (steps) {
             driver.defineSteps(steps);
             driver.start(); // 启动引导
-            TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
+            
         } else {
             console.warn(`No steps defined for page: ${pageName}`);
         }
@@ -181,7 +215,7 @@ class TutorialDriver {
   
 /* 开始执行 */
 window.addEventListener('DOMContentLoaded', async () => {
-    const path = "../src/config/zh-CN.json";
+    const path = "../src/config/zh-CN.json?"
     const CSSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
         'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.css',
