@@ -1,4 +1,4 @@
-/**
+ /**
  * Loder 类用于加载CSS和JS文件
  */
  class Loader {
@@ -157,12 +157,14 @@ class TutorialDriver {
             document.querySelector(selector).addEventListener('click', () => {
                 console.info(`${selector} has been clicked, driver started`);
                 this.startDriver();
+                driverReport("Automatic Start")
             });
         } else {
             console.warn(`can not found start-element: ${selector}`);
         }
         if (TutorialDriver.shouldStartTutorial(this.getPageName())) {
             this.startDriver();
+            driverReport("Manual Start")
         } else {
             console.info(`page should not be start`);
         }
@@ -183,6 +185,7 @@ class TutorialDriver {
         // 绑定事件：关闭导航之后标记当前导航未完成，下一次访问将会开启
         this.config.initConfig.onDeselected = () => {
           if (TutorialDriver.shouldStartTutorial(this.getPageName(pageName),this.cancleDriverCount[this.getPageName(pageName)]) == true) {
+            driverReport('Closed')
             // 导航没有被看过，用户首次观看的时候就关闭它了
             const viewedPages = JSON.parse(localStorage.getItem('viewedTutorials') || '{}');
             viewedPages[pageName] = +new Date();
@@ -213,9 +216,38 @@ class TutorialDriver {
     }
 }
   
+/**
+ * 返回JSON文件路径
+ * @param {String} baseurl - 插件路径
+ * @return {String} - 文件路径
+ */
+function getJsonFilePath(baseurl = "/plugins/driver-custom-plugin/"){
+  try {
+    return `${baseurl}json/${I18n.locale}.json`
+  } catch (e) {
+    return `/src/json/zh_CN.json`
+  }
+}
+
+/**
+ * 上报事件 
+ * @param {String} lable - 谷歌统计里面的那个lable
+ */
+function driverReport(lable){
+  try {
+    gtag('event', 'driver', {
+      'event_label': lable
+    })
+  } catch (e) {
+    console.log()
+  }
+  
+}
+  
 /* 开始执行 */
 window.addEventListener('DOMContentLoaded', async () => {
-    const path = "../src/config/zh-CN.json?"
+    const path = getJsonFilePath()
+    console.log(`Json file path :${path}`)
     const CSSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
         'https://cdnjs.cloudflare.com/ajax/libs/driver.js/0.9.8/driver.min.css',

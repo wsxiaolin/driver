@@ -5,7 +5,62 @@
 用的driver.js库是一个**旧版本**，[文档](http://driver.employleague.cn/guide/#%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B)
 
 
+## 谷歌统计事件上报
+
+位于index.js内的driverReport函数之内，紫大麻烦**注册一下事件，引入JS文件，和找个地方写一下`gtag('config', 'GA_MEASUREMENT_ID')`**，目前这个代码会用到：
+
+eventName统一为：driver  
+
+event_label有三个：
+- Automatic Start
+- Manual Start
+- Closed
+
+
+## 先看看这个
+
+1，main.js 把第218行的路径修改为配置文件的路径就行。  
+不过这里有一个问题，语言文件是固定的（zh-CN.json），多语言支持默认为：`const userLanguage = I18n.locale`; 就行）会返回用户设置的语言
+
+![](/pic/Screenshot_20240316_095631.jpg)
+
+2，src下的min.js和min.css可以不加入插件，这个是下载下来的库，不加入通过cdn引入，加入的话修改这几行，把本地路径放在数组的第一项。
+
+![](/pic/Screenshot_20240316_100231.jpg)
+
+3，插件只需要全局注入js脚本就行，可以写一个插件文件夹再上传到Discourse插件列表，目录咋写文档里大概有，也交给紫大啦，这是一个例子：
+
+```
+driver-custom-plugin/
+│
+├── assets/
+│   └── javascripts/
+│       └── main.js     # 主要的 JavaScript 文件
+│
+├── json/                    # 存放 JSON 文件的文件夹
+│   ├── file1.json
+│   ├── file2.json
+│   ├── file3.json
+│   └── ...
+│
+├── plugin.rb                # 插件的主要配置文件
+```
+
+4，plugin.rb 紫大应该比我熟，简单的可以这么写：
+
+```
+# name: driver-custom-plugin
+# version: 0.1
+# authors: []
+
+register_asset 'javascripts/main.js', :server_side
+register_asset 'json/file1.json', :server_side //这个不知道需不需要
+register_asset 'json/file2.json', :server_side
+register_asset 'json/file3.json', :server_side
+```
 ## 配置
+
+配置信息位于getJsonFilePath函数内，baseurl是插件路径，如果不改别的的话默认值就是安装路径+插件名，改了的话可以在rb里面传入，或者考虑用那种既可以写js又可以写rb的文件（不了解，听说可以）
 
 配置对象包括以下属性：
 
