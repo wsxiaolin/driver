@@ -21,8 +21,8 @@
   }
   
   nav {
-    background-color: #444;
-    color: #fff;
+    background-color: white;
+    color: white;
     text-align: center;
     padding: 5px 0;
   }
@@ -48,6 +48,12 @@
     bottom: 0;
     width: 100%;
   }
+  #hope {
+    display: none
+  }
+  #test{
+    color: red
+  }
 </style>
 </head>
 <body>
@@ -60,6 +66,7 @@
   <a href="#" id="navStart">强制开启导航，一般可以放在页面上的一个按钮</a> 
   <p></p>
   <a href="#" onclick="localStorage.clear()">清除浏览记录</a> 
+  <a id="test" onclick="document.querySelector('#hope').style.display='block'">和discourse一样，用户移动端交互后会出现元素</a>
 
 </nav>
 
@@ -69,9 +76,9 @@
     <p>This is the content of article 1.</p>
   </article>
 
-  <article>
-    <h2>Article Title 2</h2>
-    <p>This is the content of article 2.</p>
+  <article id="hope">
+    <h2>移动端不会出现的元素</h2>
+    <p>现在出现了</p>
   </article>
 </section>
 

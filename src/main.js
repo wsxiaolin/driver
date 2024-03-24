@@ -75,13 +75,13 @@
  */
 class TutorialDriver {
     /**
-     * 创建 TutorialDriver 实例时加载指定的 CSS 和 JS 资源。
-     * @param {Array<string>} CSSLinks - 需要加载的 CSS 文件链接数组。
-     * @param {Array<string>} JSLinks - 需要加载的 JS 文件链接数组。
+     * 创建 TutorialDriver 实例 
      */
     constructor() {
         this.config = {};
         this.cancleDriverCount = JSON.parse(localStorage.getItem('cancleDriverCount') || '{}');
+        this.stepNum = 1 //正在执行的步数，从一开始
+        
     }
 
     /**
@@ -175,10 +175,25 @@ class TutorialDriver {
      */
     startDriver() {
         const pageName = this.getPageName();
-        
+        // 点击下一步
         this.config.initConfig.onNext = () => {
             if(driver.hasNextStep() == false){
+              // 已经完成
               TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
+            } else{
+              console.log(this.config.pageDriversMap[pageName][this.stepNum-1])
+              
+              if (document.querySelector(this.config.pageDriversMap[pageName][this.stepNum].popover.hopeElement)) {
+                // 希望中的元素出现
+              } else if(this.config.pageDriversMap[pageName][this.stepNum-1].popover.hasOwnProperty("nextClick")){
+                // 没出现
+                try {
+                document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick).click()
+                } catch (e) {
+                  console.log(e)
+                }
+              }
+              this.stepNum ++ 
             }
         }
         
@@ -209,6 +224,7 @@ class TutorialDriver {
         if (steps) {
             driver.defineSteps(steps);
             driver.start(); // 启动引导
+            this.stepNum = 1 //正在执行的步数，从一开始
             
         } else {
             console.warn(`No steps defined for page: ${pageName}`);

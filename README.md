@@ -4,6 +4,10 @@
 
 用的driver.js库是一个**旧版本**，[文档](http://driver.employleague.cn/guide/#%E7%AE%80%E4%BB%8B%E5%8F%8A%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B)
 
+## 移动端适配
+核心逻辑：在出现需要的元素没有出现的时候，点击对应按钮使他出现。
+配置文件："hopeElement": "#hope" //需要的元素
+        "nextClick" : "#test"  //没有元素点击这里
 
 ## 谷歌统计事件上报
 
