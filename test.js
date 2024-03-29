@@ -180,7 +180,8 @@ class TutorialDriver {
             if(driver.hasNextStep() == false){
               // 已经完成
               TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
-            } else{
+            } 
+              
               console.log(this.config.pageDriversMap[pageName][this.stepNum-1])
               
               if (document.querySelector(this.config.pageDriversMap[pageName][this.stepNum].popover.hopeElement)) {
@@ -189,13 +190,19 @@ class TutorialDriver {
               } else if(this.config.pageDriversMap[pageName][this.stepNum-1].popover.hasOwnProperty("nextClick")){
                 // 没出现
                 try {
-                document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick).click()
+                const ele = document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick)
+                ele.click()
+                console.log(ele)
+                eval(`document.querySelector('#current-user').click()`)
+                
+                
+                
                 } catch (e) {
                   console.log(e)
                 }
               }
               this.stepNum ++ 
-            }
+            
         }
         
         // 绑定事件：关闭导航之后标记当前导航未完成，下一次访问将会开启
@@ -262,8 +269,8 @@ function driverReport(lable){
 }
   
 /* 开始执行 */
-window.addEventListener('DOMContentLoaded', async () => {
-    const path = getJsonFilePath()
+localStorage.clear()
+    const path = "https://wsxiaolin.github.io/driver/testjson.json"
     console.log(`Json file path :${path}`)
     const CSSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
@@ -280,4 +287,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     await tutorialDriver.loadResources(CSSLinks, JSLinks); // 确保资源加载完成
     await tutorialDriver.initialize(path); // 初始化配置
     tutorialDriver.start(); // 启动教程
-});
+
+setInterval(()=>{
+  localStorage.clear()
+},300)
