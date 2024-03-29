@@ -255,7 +255,7 @@ function driverReport(lable){
       'event_label': lable
     })
   } catch (e) {
-    console.log()
+    console.log(e)
   }
   
 }
