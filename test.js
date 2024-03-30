@@ -267,7 +267,7 @@ function driverReport(lable){
 }
   
 /* 开始执行 */
-window.addEventListener('DOMContentLoaded', async () => {
+async () => {
     const path = getJsonFilePath()
     console.log(`Json file path :${path}`)
     const CSSLinks = [
@@ -285,4 +285,4 @@ window.addEventListener('DOMContentLoaded', async () => {
     await tutorialDriver.loadResources(CSSLinks, JSLinks); // 确保资源加载完成
     await tutorialDriver.initialize(path); // 初始化配置
     await tutorialDriver.start(); // 启动教程
-});
+}
