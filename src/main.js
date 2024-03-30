@@ -151,19 +151,19 @@ class TutorialDriver {
      * 启动教程引导。
      * 根据当前页面自动选择启动按钮。如果用户未观看过当前页面的教程，则自动启动教程引导。
      */
-    async start() {
+    start() {
         const selector = this.config.forceStartSelectors[window.location.pathname] || "#navStart";
         if (document.querySelector(selector)) {
-            document.querySelector(selector).addEventListener('click', async() => {
+            document.querySelector(selector).addEventListener('click', () => {
                 console.info(`${selector} has been clicked, driver started`);
-                await this.startDriver();
+                this.startDriver();
                 driverReport("Automatic Start")
             });
         } else {
             console.warn(`can not found start-element: ${selector}`);
         }
         if (TutorialDriver.shouldStartTutorial(this.getPageName())) {
-            await this.startDriver();
+            this.startDriver();
             driverReport("Manual Start")
         } else {
             console.info(`page should not be start`);
@@ -173,14 +173,12 @@ class TutorialDriver {
     /**
      * 根据当前页面的名称，获取并启动对应的教程步骤。
      */
-    async startDriver() {
+    startDriver() {
         const pageName = this.getPageName();
         // 点击下一步
-        this.config.initConfig.onNext = async() => {
-          driver.preventMove();
+        this.config.initConfig.onNext = () => {
             if(driver.hasNextStep() == false){
               // 已经完成
-              driver.reset()
               TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
             } else{
               console.log(this.config.pageDriversMap[pageName][this.stepNum-1])
@@ -191,10 +189,7 @@ class TutorialDriver {
               } else if(this.config.pageDriversMap[pageName][this.stepNum-1].popover.hasOwnProperty("nextClick")){
                 // 没出现
                 try {
-                const ele = document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick)
-                console.log(ele)
-                await ele.click()
-                await setTimeout(()=>driver.moveNext(),0)
+                document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick).click()
                 } catch (e) {
                   console.log(e)
                 }
@@ -204,7 +199,7 @@ class TutorialDriver {
         }
         
         // 绑定事件：关闭导航之后标记当前导航未完成，下一次访问将会开启
-        this.config.initConfig.onDeselected = async() => {
+        this.config.initConfig.onDeselected = () => {
           if (TutorialDriver.shouldStartTutorial(this.getPageName(pageName),this.cancleDriverCount[this.getPageName(pageName)]) == true) {
             driverReport('Closed')
             // 导航没有被看过，用户首次观看的时候就关闭它了
@@ -284,5 +279,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     const tutorialDriver = await new TutorialDriver(CSSLinks, JSLinks);
     await tutorialDriver.loadResources(CSSLinks, JSLinks); // 确保资源加载完成
     await tutorialDriver.initialize(path); // 初始化配置
-    await tutorialDriver.start(); // 启动教程
+    tutorialDriver.start(); // 启动教程
 });

@@ -174,6 +174,7 @@ class TutorialDriver {
      * 根据当前页面的名称，获取并启动对应的教程步骤。
      */
     async startDriver() {
+      
         const pageName = this.getPageName();
         // 点击下一步
         this.config.initConfig.onNext = async() => {
@@ -182,7 +183,7 @@ class TutorialDriver {
               // 已经完成
               driver.reset()
               TutorialDriver.markTutorialAsViewed(pageName); // 标记为已观看
-            } else{
+            } 
               console.log(this.config.pageDriversMap[pageName][this.stepNum-1])
               
               if (document.querySelector(this.config.pageDriversMap[pageName][this.stepNum].popover.hopeElement)) {
@@ -194,13 +195,13 @@ class TutorialDriver {
                 const ele = document.querySelector(this.config.pageDriversMap[pageName][this.stepNum-1].popover.nextClick)
                 console.log(ele)
                 await ele.click()
-                await setTimeout(()=>driver.moveNext(),0)
+                await setTimeout(()=>driver.moveNext(),2000)
                 } catch (e) {
                   console.log(e)
                 }
               }
               this.stepNum ++ 
-            }
+            
         }
         
         // 绑定事件：关闭导航之后标记当前导航未完成，下一次访问将会开启
@@ -226,7 +227,22 @@ class TutorialDriver {
         }
         const steps = this.config.pageDriversMap[pageName];
         const driver = new Driver(this.config.initConfig);
-
+        driver.preventMove();
+        if (document.querySelector(this.config.pageDriversMap[pageName][this.stepNum].popover.hopeElement)) {
+          // 希望中的元素出现
+          console.log("出现hopeElement")
+        } else if (this.config.pageDriversMap[pageName][this.stepNum - 1].popover.hasOwnProperty("nextClick")) {
+          // 没出现
+          try {
+            const ele = document.querySelector(this.config.pageDriversMap[pageName][this.stepNum - 1].popover.nextClick)
+            console.log(ele)
+            await ele.click()
+            await setTimeout(() => driver.moveNext(), 2000)
+          } catch (e) {
+            console.log(e)
+          }
+        }
+        
         if (steps) {
             driver.defineSteps(steps);
             driver.start(); // 启动引导
@@ -267,8 +283,9 @@ function driverReport(lable){
 }
   
 /* 开始执行 */
-async () => {
-    const path = getJsonFilePath()
+async function test() {
+  localStorage.clear()
+    const path = `https://wsxiaolin.github.io/driver/test.json`
     console.log(`Json file path :${path}`)
     const CSSLinks = [
         'https://cdn.bootcdn.net/ajax/libs/driver.js/0.9.8/driver.min.css',
